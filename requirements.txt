@@ -1,0 +1,6 @@
+streamlit
+pandas
+numpy
+catboost
+openpyxl
+scikit-learn
