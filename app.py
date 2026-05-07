@@ -160,6 +160,60 @@ The model output represents the predicted probability of objective response, nam
     )
 )
 
+
+with st.expander(
+    text(
+        "变量定义说明：Vp分级与Up-to-seven标准",
+        "Variable definitions: Vp classification and up-to-seven criteria"
+    ),
+    expanded=True
+):
+    st.markdown(
+        text(
+            """
+**Vp分级定义：**
+
+- **Vp0**：无门静脉癌栓；
+- **Vp1**：癌栓位于门静脉二级分支以远；
+- **Vp2**：癌栓累及门静脉二级分支；
+- **Vp3**：癌栓累及门静脉一级分支；
+- **Vp4**：癌栓累及门静脉主干或对侧门静脉分支。
+
+**Up-to-seven标准：**
+
+Up-to-seven标准根据 **最大肿瘤直径（cm） + 肿瘤数目** 计算。  
+若二者之和 **≤ 7**，通常认为符合Up-to-seven标准；若 **> 7**，则不符合该标准。
+
+**编码提醒：**
+
+本网页输入值必须与原始建模数据中的编码保持一致。本网页默认：  
+- `up_to_seven = 1` 表示符合Up-to-seven标准；  
+- `up_to_seven = 0` 表示不符合Up-to-seven标准。
+""",
+            """
+**Vp classification:**
+
+- **Vp0**: no portal vein tumor thrombus;
+- **Vp1**: tumor thrombus distal to the second-order branches of the portal vein;
+- **Vp2**: tumor thrombus involving the second-order branches;
+- **Vp3**: tumor thrombus involving the first-order branches;
+- **Vp4**: tumor thrombus involving the main portal vein trunk or the contralateral portal vein branch.
+
+**Up-to-seven criteria:**
+
+The up-to-seven criteria are calculated as:  
+**largest tumor diameter in centimeters + number of tumors**.  
+A sum of **≤ 7** is generally considered within the up-to-seven criteria, whereas a sum of **> 7** is considered beyond the criteria.
+
+**Coding note:**
+
+The input values must be consistent with the coding used in the original modeling dataset. This web calculator assumes that:  
+- `up_to_seven = 1` indicates within the up-to-seven criteria;  
+- `up_to_seven = 0` indicates beyond the up-to-seven criteria.
+"""
+        )
+    )
+
 st.divider()
 
 
@@ -192,28 +246,6 @@ with st.form("prediction_form"):
             )
         )
 
-        Vp_Classification = st.number_input(
-            text("门静脉癌栓分型", "Vp classification"),
-            min_value=0,
-            max_value=4,
-            value=0,
-            step=1,
-            help=text(
-                "请按照原始建模数据中的Vp分型编码输入。",
-                "Enter the Vp classification code according to the original modeling dataset."
-            )
-        )
-
-        up_to_seven = st.selectbox(
-            text("Up-to-seven标准", "Up-to-seven criteria"),
-            options=[0, 1],
-            index=0,
-            help=text(
-                "请按照原始建模数据中的0/1编码选择。",
-                "Select 0 or 1 according to the coding used in the original modeling dataset."
-            )
-        )
-
         Tumor_diameter = st.number_input(
             text("最大肿瘤直径", "Tumor diameter"),
             min_value=0.0,
@@ -221,8 +253,69 @@ with st.form("prediction_form"):
             value=5.0,
             step=0.1,
             help=text(
-                "请输入最大肿瘤直径，单位需与原始建模数据一致。",
-                "Enter the maximum tumor diameter. The unit should be consistent with the original modeling dataset."
+                "请输入最大肿瘤直径，单位通常为cm，需与原始建模数据一致。",
+                "Enter the maximum tumor diameter, usually in cm. The unit should be consistent with the original modeling dataset."
+            )
+        )
+
+        calculated_up_to_seven_sum = Tumor_number + Tumor_diameter
+
+        st.caption(
+            text(
+                f"根据当前输入：肿瘤数目 + 最大肿瘤直径 = {calculated_up_to_seven_sum:.1f}。若≤7，通常符合Up-to-seven标准。",
+                f"Based on current inputs: tumor number + maximum tumor diameter = {calculated_up_to_seven_sum:.1f}. A value ≤7 is generally within the up-to-seven criteria."
+            )
+        )
+
+        vp_options = [0, 1, 2, 3, 4]
+
+        vp_label_cn = {
+            0: "0 = Vp0：无门静脉癌栓",
+            1: "1 = Vp1：癌栓位于门静脉二级分支以远",
+            2: "2 = Vp2：癌栓累及门静脉二级分支",
+            3: "3 = Vp3：癌栓累及门静脉一级分支",
+            4: "4 = Vp4：癌栓累及门静脉主干或对侧门静脉分支"
+        }
+
+        vp_label_en = {
+            0: "0 = Vp0: no portal vein tumor thrombus",
+            1: "1 = Vp1: thrombus distal to second-order branches",
+            2: "2 = Vp2: thrombus involving second-order branches",
+            3: "3 = Vp3: thrombus involving first-order branches",
+            4: "4 = Vp4: thrombus involving main portal vein trunk or contralateral portal vein branch"
+        }
+
+        Vp_Classification = st.selectbox(
+            text("门静脉癌栓分型", "Vp classification"),
+            options=vp_options,
+            index=0,
+            format_func=lambda x: vp_label_cn[x] if IS_CN else vp_label_en[x],
+            help=text(
+                "请选择门静脉癌栓Vp分型，编码方式需与原始建模数据一致。",
+                "Select the Vp classification code. The coding should be consistent with the original modeling dataset."
+            )
+        )
+
+        uts_options = [0, 1]
+
+        uts_label_cn = {
+            0: "0 = 不符合Up-to-seven标准（最大肿瘤直径cm + 肿瘤数目 > 7）",
+            1: "1 = 符合Up-to-seven标准（最大肿瘤直径cm + 肿瘤数目 ≤ 7）"
+        }
+
+        uts_label_en = {
+            0: "0 = Beyond up-to-seven criteria (largest tumor diameter in cm + tumor number > 7)",
+            1: "1 = Within up-to-seven criteria (largest tumor diameter in cm + tumor number ≤ 7)"
+        }
+
+        up_to_seven = st.selectbox(
+            text("Up-to-seven标准", "Up-to-seven criteria"),
+            options=uts_options,
+            index=1 if calculated_up_to_seven_sum <= 7 else 0,
+            format_func=lambda x: uts_label_cn[x] if IS_CN else uts_label_en[x],
+            help=text(
+                "Up-to-seven标准通常定义为：最大肿瘤直径(cm) + 肿瘤数目 ≤ 7。请选择与原始建模数据一致的0/1编码。",
+                "The up-to-seven criteria are generally defined as: largest tumor diameter (cm) + number of tumors ≤ 7. Select the 0/1 code consistent with the original modeling dataset."
             )
         )
 
@@ -331,7 +424,14 @@ if submitted:
             "客观缓解预测概率",
             "Predicted probability of objective response"
         ),
-        value=f"{pred_score:.3f}"
+        value=f"{pred_score * 100:.1f}%"
+    )
+
+    st.caption(
+        text(
+            f"模型原始预测评分：{pred_score:.3f}",
+            f"Raw model prediction score: {pred_score:.3f}"
+        )
     )
 
     st.metric(
