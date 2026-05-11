@@ -163,14 +163,22 @@ The model output represents the predicted probability of objective response, nam
 
 with st.expander(
     text(
-        "变量定义说明：Vp分级与Up-to-seven标准",
-        "Variable definitions: Vp classification and up-to-seven criteria"
+        "变量定义说明：肿瘤数目编码、Vp分级与Up-to-seven标准",
+        "Variable definitions: tumor number coding, Vp classification and up-to-seven criteria"
     ),
     expanded=True
 ):
     st.markdown(
         text(
             """
+**肿瘤数目编码：**
+
+本模型中的 `Tumor_number` 为分类编码，而不是真实肿瘤个数：
+
+- `Tumor_number = 1`：单发肿瘤；
+- `Tumor_number = 2`：2–3个肿瘤；
+- `Tumor_number = 3`：≥3个肿瘤。
+
 **Vp分级定义：**
 
 - **Vp0**：无门静脉癌栓；
@@ -181,7 +189,7 @@ with st.expander(
 
 **Up-to-seven标准：**
 
-Up-to-seven标准根据 **最大肿瘤直径（cm） + 肿瘤数目** 计算。  
+Up-to-seven标准根据 **最大肿瘤直径（cm） + 真实肿瘤个数** 计算。  
 若二者之和 **≤ 7**，通常认为符合Up-to-seven标准；若 **> 7**，则不符合该标准。
 
 **编码提醒：**
@@ -191,6 +199,14 @@ Up-to-seven标准根据 **最大肿瘤直径（cm） + 肿瘤数目** 计算。
 - `up_to_seven = 0` 表示不符合Up-to-seven标准。
 """,
             """
+**Tumor number coding:**
+
+In this model, `Tumor_number` is a categorical code rather than the exact tumor count:
+
+- `Tumor_number = 1`: single tumor;
+- `Tumor_number = 2`: 2–3 tumors;
+- `Tumor_number = 3`: ≥3 tumors.
+
 **Vp classification:**
 
 - **Vp0**: no portal vein tumor thrombus;
@@ -202,7 +218,7 @@ Up-to-seven标准根据 **最大肿瘤直径（cm） + 肿瘤数目** 计算。
 **Up-to-seven criteria:**
 
 The up-to-seven criteria are calculated as:  
-**largest tumor diameter in centimeters + number of tumors**.  
+**largest tumor diameter in centimeters + actual tumor count**.  
 A sum of **≤ 7** is generally considered within the up-to-seven criteria, whereas a sum of **> 7** is considered beyond the criteria.
 
 **Coding note:**
@@ -234,15 +250,28 @@ with st.form("prediction_form"):
 
     with col1:
 
-        Tumor_number = st.number_input(
+        tumor_number_options = [1, 2, 3]
+
+        tumor_number_label_cn = {
+            1: "1 = 单发肿瘤",
+            2: "2 = 2–3个肿瘤",
+            3: "3 = ≥3个肿瘤"
+        }
+
+        tumor_number_label_en = {
+            1: "1 = Single tumor",
+            2: "2 = 2–3 tumors",
+            3: "3 = ≥3 tumors"
+        }
+
+        Tumor_number = st.selectbox(
             text("肿瘤数目", "Tumor number"),
-            min_value=1,
-            max_value=50,
-            value=3,
-            step=1,
+            options=tumor_number_options,
+            index=0,
+            format_func=lambda x: tumor_number_label_cn[x] if IS_CN else tumor_number_label_en[x],
             help=text(
-                "请输入肿瘤数目，编码方式需与原始建模数据一致。",
-                "Enter the number of tumors. The coding should be consistent with the original modeling dataset."
+                "请选择肿瘤数目的分类编码：1表示单发肿瘤，2表示2–3个肿瘤，3表示≥3个肿瘤。该编码必须与原始建模数据一致。",
+                "Select the categorical code for tumor number: 1 indicates a single tumor, 2 indicates 2–3 tumors, and 3 indicates ≥3 tumors. The coding must be consistent with the original modeling dataset."
             )
         )
 
@@ -258,12 +287,10 @@ with st.form("prediction_form"):
             )
         )
 
-        calculated_up_to_seven_sum = Tumor_number + Tumor_diameter
-
         st.caption(
             text(
-                f"根据当前输入：肿瘤数目 + 最大肿瘤直径 = {calculated_up_to_seven_sum:.1f}。若≤7，通常符合Up-to-seven标准。",
-                f"Based on current inputs: tumor number + maximum tumor diameter = {calculated_up_to_seven_sum:.1f}. A value ≤7 is generally within the up-to-seven criteria."
+                "注意：模型中的Tumor_number为分类编码，不是真实肿瘤个数。Up-to-seven标准应根据真实肿瘤个数和最大肿瘤直径判断。",
+                "Note: Tumor_number in the model is a categorical code rather than the exact tumor count. The up-to-seven criteria should be determined using the actual tumor count and maximum tumor diameter."
             )
         )
 
@@ -299,23 +326,23 @@ with st.form("prediction_form"):
         uts_options = [0, 1]
 
         uts_label_cn = {
-            0: "0 = 不符合Up-to-seven标准（最大肿瘤直径cm + 肿瘤数目 > 7）",
-            1: "1 = 符合Up-to-seven标准（最大肿瘤直径cm + 肿瘤数目 ≤ 7）"
+            0: "0 = 不符合Up-to-seven标准",
+            1: "1 = 符合Up-to-seven标准"
         }
 
         uts_label_en = {
-            0: "0 = Beyond up-to-seven criteria (largest tumor diameter in cm + tumor number > 7)",
-            1: "1 = Within up-to-seven criteria (largest tumor diameter in cm + tumor number ≤ 7)"
+            0: "0 = Beyond up-to-seven criteria",
+            1: "1 = Within up-to-seven criteria"
         }
 
         up_to_seven = st.selectbox(
             text("Up-to-seven标准", "Up-to-seven criteria"),
             options=uts_options,
-            index=1 if calculated_up_to_seven_sum <= 7 else 0,
+            index=0,
             format_func=lambda x: uts_label_cn[x] if IS_CN else uts_label_en[x],
             help=text(
-                "Up-to-seven标准通常定义为：最大肿瘤直径(cm) + 肿瘤数目 ≤ 7。请选择与原始建模数据一致的0/1编码。",
-                "The up-to-seven criteria are generally defined as: largest tumor diameter (cm) + number of tumors ≤ 7. Select the 0/1 code consistent with the original modeling dataset."
+                "Up-to-seven标准定义为：最大肿瘤直径(cm) + 真实肿瘤个数 ≤ 7。请根据患者真实肿瘤个数判断，并选择与原始建模数据一致的0/1编码。",
+                "The up-to-seven criteria are defined as: largest tumor diameter (cm) + actual tumor count ≤ 7. Please determine this using the patient's actual tumor count and select the 0/1 code consistent with the original modeling dataset."
             )
         )
 
