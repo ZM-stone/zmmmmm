@@ -326,8 +326,8 @@ with st.form("prediction_form"):
         uts_options = [0, 1]
 
         uts_label_cn = {
-            0: "0 = 不符合Up-to-seven标准",
-            1: "1 = 符合Up-to-seven标准"
+            0: "0 = 符合Up-to-seven标准",
+            1: "1 = 不符合Up-to-seven标准"
         }
 
         uts_label_en = {
