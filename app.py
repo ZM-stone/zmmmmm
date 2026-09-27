@@ -195,8 +195,8 @@ Up-to-seven标准根据 **最大肿瘤直径（cm） + 真实肿瘤个数** 计�
 **编码提醒：**
 
 本网页输入值必须与原始建模数据中的编码保持一致。本网页默认：  
-- `up_to_seven = 1` 表示符合Up-to-seven标准；  
-- `up_to_seven = 0` 表示不符合Up-to-seven标准。
+- `up_to_seven = 1` 表示不符合Up-to-seven标准；  
+- `up_to_seven = 0` 表示符合Up-to-seven标准。
 """,
             """
 **Tumor number coding:**
